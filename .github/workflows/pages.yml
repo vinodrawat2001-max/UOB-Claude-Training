@@ -1,29 +1,58 @@
-﻿name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check index.html basics
+        run: |
+          test -s index.html
+          head -n 1 index.html | grep -qi '<!doctype html>'
+          grep -q '<title>' index.html
+          grep -q 'name="viewport"' index.html
+      - name: Check inline script syntax
+        run: |
+          node -e '
+            const html = require("fs").readFileSync("index.html", "utf8");
+            const match = html.match(/<script>([\s\S]*?)<\/script>/);
+            if (!match) { console.error("No inline script found"); process.exit(1); }
+            new Function(match[1]);
+            console.log("Inline script parses OK");
+          '
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Stage site files
-        run: mkdir _site && cp index.html _site/
+        run: mkdir _site && cp index.html _site/ && cp -r docs _site/docs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

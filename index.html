@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c2570c">
   <title>IT PMO | Project Delivery Board</title>
   <style>
     /* Design tokens */
@@ -304,25 +305,144 @@
     .toast.warning { border-color: #ead0a2; border-left-color: #a85d00; color: #704400; }
     @keyframes toast-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Phone-only controls: status tabs and filter toggle (hidden on larger screens) */
+    .status-tabs, .filter-toggle { display: none; }
+
     /* Responsive layout */
     @media (max-width: 1050px) {
       .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 767px) {
       .header-inner, main { padding-inline: var(--space-4); }
-      .topline, .board-heading { align-items: flex-start; }
-      .topline { flex-wrap: wrap; }
-      .header-actions { justify-content: space-between; width: 100%; }
-      .refresh-note { max-width: 60%; }
-      .summary-strip { gap: 7px 15px; }
+      .header-inner { padding-block: var(--space-3) var(--space-2); }
+      .brand-mark { width: 36px; height: 36px; }
+      .brand-name { font-size: 22px; }
+      .refresh-note { display: none; }
+      .summary-strip { margin-top: var(--space-2); padding-top: var(--space-2); gap: 4px var(--space-4); }
+      .summary-item.status-item { display: none; }
+      main { padding-block: var(--space-3) calc(88px + env(safe-area-inset-bottom)); }
+      .board-heading { margin-bottom: var(--space-3); }
+      .board-heading h1 { font-size: 19px; }
+
+      /* Add Task floats within thumb reach */
+      .primary-button {
+        position: fixed;
+        z-index: 4;
+        right: max(var(--space-4), env(safe-area-inset-right));
+        bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+        min-height: 52px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 26px;
+        background: #8f3e05;
+        color: #fff;
+        font-size: 16px;
+        box-shadow: 0 6px 18px rgb(16 42 67 / 35%);
+      }
+      .primary-button:hover { background: #743204; }
+      .header-actions { width: auto; }
+
+      /* Filters sit behind a toggle */
+      .filter-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 44px;
+        margin-bottom: var(--space-3);
+        padding: 0 var(--space-4);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--blue-800);
+        font-weight: 700;
+      }
+      .filter-toggle[aria-expanded="true"] { margin-bottom: var(--space-2); }
+      .filters { display: none; flex-direction: column; align-items: stretch; }
+      .filters.is-open { display: flex; }
+      .filter-field { min-width: 0; }
+      .filter-field label { font-size: 12px; }
+      .filter-field input, .filter-field select, .clear-button { min-height: 44px; font-size: 16px; }
+
+      /* One status column at a time, chosen from a sticky tab bar */
+      .status-tabs {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--space-1);
+        margin: 0 calc(var(--space-4) * -1) var(--space-3);
+        padding: var(--space-2) var(--space-4);
+        background: var(--canvas);
+        border-bottom: 1px solid var(--line);
+      }
+      .status-tab {
+        display: grid;
+        justify-items: center;
+        gap: 2px;
+        min-height: 56px;
+        padding: 6px 2px;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        border-radius: 4px 4px 0 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .status-tab .tab-count {
+        min-width: 28px;
+        padding: 1px 8px;
+        border-radius: 12px;
+        background: #e1e9f0;
+        color: var(--blue-900);
+        font-size: 15px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+      .status-tab.has-overdue .tab-count { background: var(--critical-bg); color: var(--critical); box-shadow: inset 0 0 0 1px #f0b8b3; }
+      .status-tab[aria-pressed="true"] { border-bottom-color: #c2570c; color: var(--blue-950); background: var(--surface); }
       .board { grid-template-columns: minmax(0, 1fr); }
-      .board-column { min-height: 150px; }
-      .filters { align-items: stretch; }
-      .filter-field { flex: 1 1 145px; min-width: 0; }
-      .clear-button { align-self: end; }
+      .board-column { display: none; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+      .board-column.is-active { display: block; }
+      .column-header { display: none; }
+      .card-list { gap: var(--space-3); }
+
+      /* Larger cards and touch targets */
+      .task-card { padding: 14px; }
+      .task-id { font-size: 11px; }
+      .card-title { font-size: 16px; margin: 8px 0 4px; }
+      .project-name { font-size: 13px; }
+      .priority-pill, .category-tag, .overdue-badge { font-size: 12px; padding: 3px 8px; }
+      .card-meta-row { font-size: 13px; }
+      .card-footer { flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin-top: 12px; padding-top: 10px; }
+      .due-date { font-size: 13px; }
+      .move-select { max-width: 140px; min-height: 44px; padding: 0 8px; font-size: 14px; }
+      .icon-button { width: 44px; height: 44px; font-size: 24px; }
+      .delete-confirm { font-size: 14px; }
+      .delete-confirm button { min-height: 44px; min-width: 56px; font-size: 14px; }
+      .empty-column { padding: 40px 8px; font-size: 14px; }
+
+      /* Add-task dialog becomes a bottom sheet */
+      dialog {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92dvh;
+        margin: auto 0 0;
+        border-radius: 14px 14px 0 0;
+      }
       .form-grid { grid-template-columns: 1fr; }
       .form-field.full-width { grid-column: auto; }
+      .form-field label { font-size: 13px; }
+      .form-field input, .form-field select, .form-field textarea { min-height: 46px; font-size: 16px; }
       .dialog-header, .dialog-body { padding-inline: var(--space-4); }
+      .dialog-body { padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom)); }
+      .form-actions { position: sticky; bottom: 0; padding-top: var(--space-2); background: var(--surface); }
+      .form-actions button { flex: 1; min-height: 48px; font-size: 16px; }
+
+      /* Toasts clear the floating button */
+      .toast-region { right: var(--space-4); left: var(--space-4); bottom: calc(84px + env(safe-area-inset-bottom)); width: auto; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto; animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
@@ -361,6 +481,7 @@
           <p>Internal technology initiatives and delivery workstreams</p>
         </div>
       </div>
+      <button class="filter-toggle" id="toggleFilters" type="button" aria-expanded="false" aria-controls="filterForm"><span id="filterToggleLabel">Filters</span><span aria-hidden="true">▾</span></button>
       <form class="filters" id="filterForm" aria-label="Filter tasks">
         <div class="filter-field">
           <label for="filterProject">Project / Workstream</label>
@@ -379,6 +500,7 @@
         </div>
         <button class="clear-button" id="clearFilters" type="button">Clear filters</button>
       </form>
+      <div class="status-tabs" id="statusTabs" role="group" aria-label="Show tasks by status"></div>
       <div class="board" id="board" aria-label="Kanban board"></div>
     </section>
   </main>
@@ -459,7 +581,7 @@
     const STATUSES = ["Backlog", "In Progress", "Blocked", "Done"];
     const PROJECTS = ["Core Banking Upgrade", "Digital Channels", "Cybersecurity Uplift", "Data & Analytics", "Infrastructure & Cloud", "Vendor Management"];
     const CATEGORIES = ["Application Development", "Infrastructure", "Cybersecurity", "Data", "Compliance", "Vendor"];
-    const state = { tasks: [], filters: {} };
+    const state = { tasks: [], filters: {}, activeStatus: "In Progress" };
     let draggedTaskId = null;
     let nextTaskNumber = 9;
 
@@ -534,10 +656,10 @@
       const summary = document.getElementById("summaryStrip");
       const statusCounts = Object.fromEntries(STATUSES.map(status => [status, state.tasks.filter(task => task.status === status).length]));
       const overdueCount = state.tasks.filter(isOverdue).length;
-      summary.innerHTML = `<span class="summary-item"><strong>${state.tasks.length}</strong> Total tasks</span>${STATUSES.map(status => `<span class="summary-item"><strong>${statusCounts[status]}</strong> ${escapeHtml(status)}</span>`).join("")}<span class="summary-item overdue"><strong>${overdueCount}</strong> Overdue</span>`;
+      summary.innerHTML = `<span class="summary-item"><strong>${state.tasks.length}</strong> Total tasks</span>${STATUSES.map(status => `<span class="summary-item status-item"><strong>${statusCounts[status]}</strong> ${escapeHtml(status)}</span>`).join("")}<span class="summary-item overdue"><strong>${overdueCount}</strong> Overdue</span>`;
       board.innerHTML = STATUSES.map(status => {
         const tasks = visibleTasks.filter(task => task.status === status);
-        return `<section class="board-column" data-status="${escapeHtml(status)}" aria-label="${escapeHtml(status)} tasks">
+        return `<section class="board-column${status === state.activeStatus ? " is-active" : ""}" data-status="${escapeHtml(status)}" aria-label="${escapeHtml(status)} tasks">
           <header class="column-header"><h2>${escapeHtml(status)}</h2><span class="count-badge" aria-label="${tasks.length} tasks">${tasks.length}</span></header>
           <div class="card-list">${tasks.length ? tasks.map(renderCard).join("") : '<div class="empty-column">No tasks</div>'}</div>
         </section>`;
@@ -545,6 +667,29 @@
       if (state.tasks.length && !visibleTasks.length) {
         board.innerHTML = '<div class="empty-filter">No tasks match these filters.</div>';
       }
+      document.getElementById("statusTabs").innerHTML = STATUSES.map(status => {
+        const tasks = visibleTasks.filter(task => task.status === status);
+        const overdue = tasks.filter(isOverdue).length;
+        const label = `${status}, ${tasks.length} tasks${overdue ? `, ${overdue} overdue` : ""}`;
+        return `<button class="status-tab${overdue ? " has-overdue" : ""}" type="button" data-status="${escapeHtml(status)}" aria-pressed="${status === state.activeStatus}" aria-label="${escapeHtml(label)}"><span class="tab-count">${tasks.length}</span><span>${escapeHtml(status)}</span></button>`;
+      }).join("");
+      const activeFilters = ["project", "assignee", "priority"].filter(key => (state.filters[key] || "").trim()).length;
+      document.getElementById("filterToggleLabel").textContent = activeFilters ? `Filters (${activeFilters} active)` : "Filters";
+    }
+
+    function handleTabClick(event) {
+      const tab = event.target.closest(".status-tab");
+      if (!tab) return;
+      state.activeStatus = tab.dataset.status;
+      renderBoard();
+      document.querySelector(`.status-tab[data-status="${CSS.escape(state.activeStatus)}"]`)?.focus();
+    }
+
+    function toggleFilters() {
+      const toggle = document.getElementById("toggleFilters");
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(open));
+      document.getElementById("filterForm").classList.toggle("is-open", open);
     }
 
     // Task status and deletion actions
@@ -772,6 +917,8 @@
       document.getElementById("closeDialog").addEventListener("click", closeTaskDialog);
       document.getElementById("cancelTask").addEventListener("click", closeTaskDialog);
       document.getElementById("taskForm").addEventListener("submit", addTask);
+      document.getElementById("statusTabs").addEventListener("click", handleTabClick);
+      document.getElementById("toggleFilters").addEventListener("click", toggleFilters);
       document.getElementById("filterForm").addEventListener("input", applyFilters);
       document.getElementById("filterForm").addEventListener("change", applyFilters);
       document.getElementById("clearFilters").addEventListener("click", () => {
